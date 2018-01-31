@@ -5,7 +5,7 @@ import csv
 import collections
 
 def get_file_name(xml_list):
-    path='/home/jayson/GDC_data/Clinical_Data/xml_data/**/*.xml'
+    path='/home/jayson/GDC_data/Clinical_Data/xml_data/nationwidechildrens.org_clinical.TCGA-ZN-A9VO.xml'
     xml_list.extend(glob.glob(path,recursive=True))
 
 def extract_attribute(xml_file_name):
@@ -13,7 +13,8 @@ def extract_attribute(xml_file_name):
     tree=et.ElementTree(file=xml_file_name)
     root=tree.getroot()
     patient=root[1]
-    for child in patient:
+    print(root[1])
+    for child in patient.iter():
         str_child=str(child)
         split_char1='}'
         split_char2="'"
@@ -26,12 +27,13 @@ def extract_attribute(xml_file_name):
         child.text=child.text.strip()
         #child.text='NULL'
         xml_dict[tag] = child.text
-        print('TAG:',tag,'ATT:',child.text,' ',type(child.text))
+        print('TAG:',tag,'ATT:',child.text,' ')
+        '''
     out_file=xml_file_name+'.csv'
     fout=csv.writer(open(out_file,'w'))
     for key, val in xml_dict.items():
         fout.writerow([key,val])
-
+        '''
 
 if __name__=='__main__':
     xml_list=[]
@@ -44,7 +46,7 @@ if __name__=='__main__':
     '''
     #print(xml_list[1])
     #extract_attribute(xml_list[1])
-    
+
     for xml_name in xml_list:
         extract_attribute(xml_name)
-    
+
