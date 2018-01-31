@@ -17,11 +17,16 @@ class GDC_api():
     def __init__(self,primary_site,filter_value):
         self.primary_site=primary_site
         self.filter_value=filter_value
+
+
+
     def send_query(self):
         #print('#####Send Query Function Start######')
         fields = [
             "file_id",
-            "cases.case_id"
+            "file_name",
+            "cases.case_id",
+            "cases.samples.submitter_id"
         ]
         fields = ",".join(fields)
         filters = {
@@ -61,14 +66,17 @@ class GDC_api():
         response = requests.get(files_endpt, params=params)
         file_uuid_list=[]
         case_uuid_list=[]
+        file_name_tcga_id={}
         #print(len(case_uuid_list))
         for file_entry in json.loads(response.content.decode("utf-8"))["data"]["hits"]:
-            #print(file_entry)
+            #print(file_entry['file_name'],file_entry['cases'][0]['samples'][0]['submitter_id'])
             file_uuid_list.append(file_entry['file_id'])
             case_uuid_list.append(file_entry['cases'][0]['case_id'])
+            file_name_tcga_id[file_entry['file_name']]=file_entry['cases'][0]['samples'][0]['submitter_id']
+
 
         print(self.primary_site+' '+self.filter_value+' '+str(len(file_uuid_list)))
-        return file_uuid_list,case_uuid_list
+        return file_uuid_list,case_uuid_list,file_name_tcga_id
 
     def make_gene_expression_text_file(self,case_uuid_list,num):
         print('#####Make Text Function Start######')
@@ -128,6 +136,7 @@ class GDC_api():
         #print(output_dict.items())
 
 
+
     def slice_file(self,uuid_list,option):
         if option==0:
             num=0
@@ -181,6 +190,12 @@ class GDC_api():
         with open(out_file, "wb")as output_file:
             output_file.write(response.content)
         print(self.primary_site+","+self.filter_value+"######download done#########")
+
+    def tcga_id_csv_files(self,name_tcga_id):
+        fout = csv.writer(open(self.primary_site+'.csv','w'))
+        for key, val in name_tcga_id.items():
+            fout.writerow([key,val])
+
 #"Bone","Blood","Brain","Nervous System","Lung","Breast","Adrenal Gland", "Bile Duct","Bladder", "Bone Marrow", "Cervix", "Colorectal", "Esophagus", "Eye",
 #                    "Head and Neck", "Kidney", "Liver", "Lymph Nodes", "Ovary", "Pancreas", "Pleura", "Prostate",
 #                    "Skin", "Soft Tissue", "Stomach", "Testis", "Thymus", "Thyroid",
@@ -200,10 +215,12 @@ if __name__=="__main__":
     for data_type in data_type_values:
         for primary in primary_site:
             data=GDC_api(primary,data_type)
-            file_uuid_list,case_uuid_list=data.send_query()
+            file_uuid_list,case_uuid_list,file_name_tcga_id=data.send_query()
+            data.tcga_id_csv_files(file_name_tcga_id)
+
             #print(case_uuid_list)
-            
-            
+
+            '''
             if data_type=="Gene Expression Quantification" and len(case_uuid_list)!=0:
                 print(primary + "  has " + data_type)
                 data.slice_file(case_uuid_list,0)
@@ -215,7 +232,7 @@ if __name__=="__main__":
                 #data.slice_file(file_uuid_list,1)
             else:
                 print(primary+" doens't have "+data_type)
-
+            '''
 
 
 
